@@ -36,7 +36,7 @@ h1{font-size:1.35rem;margin:0;font-weight:700;letter-spacing:.01em}
 .ref{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted)}
 select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);
   border-radius:8px;padding:6px 8px}
-.tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--panel);border:1px solid var(--line);
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);background:var(--panel);border:1px solid var(--line);
   border-radius:12px;padding:4px;margin-bottom:14px}
 .tabs button{font:inherit;font-weight:500;border:0;background:transparent;color:var(--muted);
   padding:10px;border-radius:9px;cursor:pointer}
@@ -89,14 +89,16 @@ svg{display:block;width:100%;height:auto}
 body.play{height:100%}
 body.play .wrap{max-width:none;height:100%;display:grid;gap:10px 14px;padding:10px 14px 12px;
   grid-template-columns:minmax(0,1fr) minmax(210px,26%);
-  grid-template-rows:auto minmax(0,1fr) auto;
-  grid-template-areas:"head tabs" "staff note" "chips ctrl"}
+  grid-template-rows:auto minmax(0,1fr) auto auto;
+  grid-template-areas:"head tabs" "staff note" "staff ctrl" "chips chips"}
 body.play header{grid-area:head;margin:0}
 body.play h1{font-size:1.1rem}
-body.play .tabs button{padding:7px 6px;white-space:nowrap;font-size:.9rem}
+body.play .tabs button{padding:7px 4px;white-space:nowrap;font-size:.85rem}
 body.play .hold .long,body.play .legend{display:none}
 body.play #chipsBox{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
 body.play #chipsBox .row{margin:0}
+body.play #chipsBox .metro{margin:0 0 0 auto}
+body.play .readout{min-height:0;overflow:hidden}
 body.play .tabs{grid-area:tabs;margin:0;align-self:center}
 body.play #playPanel{display:contents}
 body.play .staffbox{grid-area:staff;min-height:0;display:flex;align-items:center;padding:4px;overflow:hidden}
@@ -111,12 +113,20 @@ body.play .note sub{font-size:.4em}
 body.play .solfa{font-size:clamp(2rem,10vh,4.2rem)}
 body.play .chip{font-size:1.05rem;padding:6px 12px}
 body.play .start{margin:0 0 8px;padding:12px}
+body.drill .note{font-size:clamp(2rem,12vh,4.2rem)}
+body.drill .solfa{font-size:clamp(1.3rem,7vh,2.6rem)}
+body.drill .rlabel{font-size:.8rem}
+body.drill .drillmsg{font-size:.85rem;min-height:0}
+body.play .hold{display:none}
+body.play .start{padding:10px}
 @media (orientation: portrait){
   body.play{height:auto}
   body.play .wrap{height:auto;max-width:560px;grid-template-columns:minmax(0,1fr);grid-template-rows:none;
     grid-template-areas:"head" "tabs" "rotate" "staff" "note" "chips" "ctrl"}
   body.play #chipsBox{display:block}
   body.play #chipsBox .row{margin:0 0 10px}
+  body.play #chipsBox .metro{margin:12px 0 0}
+  body.play .hold{display:flex}
   body.play .legend{display:flex}
   body.play .rotate{display:block;grid-area:rotate}
   body.play .note{font-size:4.6rem}
@@ -124,6 +134,26 @@ body.play .start{margin:0 0 8px;padding:12px}
   body.play .wrap{padding-bottom:28px}
   body.play .staffbox svg{height:auto}
 }
+/* metronome */
+.metro{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:12px}
+.mbtn{font:inherit;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--panel);
+  color:var(--ink);font-size:1.25rem;line-height:1;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.bpm{min-width:3.3em;text-align:center;font-weight:700;font-size:1.2rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.bpm small{display:block;font-size:.65rem;font-weight:400;color:var(--muted)}
+.go{font:inherit;font-weight:700;padding:9px 14px;border-radius:10px;border:0;background:var(--ink);color:var(--bg);cursor:pointer;white-space:nowrap}
+.go.on{background:var(--accent);color:#fff}
+.beats{display:flex;gap:6px;align-items:center;margin-left:2px}
+.beats i{width:11px;height:11px;border-radius:50%;background:var(--line)}
+.beats i.acc{width:15px;height:15px}
+.beats i.lit{background:var(--accent)}
+.beats i.acc.lit{background:var(--off)}
+/* scale drill */
+.rlabel{font-size:.9rem;color:var(--muted);line-height:1.4}
+.drillmsg{font-weight:700;min-height:1.4em;font-size:1rem;line-height:1.4}
+.drillmsg.ok{color:var(--ok)} .drillmsg.warn{color:var(--accent)} .drillmsg.off{color:var(--off)}
+#drillRow{margin:0 0 10px}
+body:not(.drill) #drillRow, body:not(.drill) .rlabel, body:not(.drill) .drillmsg{display:none}
+body.drill #chips, body.drill .legend{display:none}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion: reduce){ .chip{transition:none} }
 </style>
@@ -142,12 +172,15 @@ body.play .start{margin:0 0 8px;padding:12px}
 
   <div class="tabs" role="tablist">
     <button role="tab" id="tabTune" aria-selected="true">ตั้งสาย</button>
-    <button role="tab" id="tabPlay" aria-selected="false">ดูโน้ตที่เล่น</button>
+    <button role="tab" id="tabPlay" aria-selected="false">ดูโน้ต</button>
+    <button role="tab" id="tabDrill" aria-selected="false">ฝึกสเกล</button>
   </div>
 
   <section class="readout" aria-live="polite">
+    <div class="rlabel" id="rlabel"></div>
     <div class="note idle" id="noteName">–</div>
     <div class="solfa idle" id="solfa" hidden></div>
+    <div class="drillmsg" id="drillMsg"></div>
     <div class="meta" id="meta">กดปุ่มเริ่มฟังแล้วสีสายเปล่า</div>
     <svg id="meter" viewBox="0 0 300 150" aria-hidden="true"></svg>
     <div class="status" id="status"></div>
@@ -178,10 +211,26 @@ body.play .start{margin:0 0 8px;padding:12px}
       <label for="scaleSel" style="font-weight:500">บันไดเสียง</label>
       <select id="scaleSel"></select>
       </div>
+      <div class="row" id="drillRow">
+        <select id="octSel" aria-label="จำนวนออกเตฟ"><option value="1">1 ออกเตฟ</option><option value="2">2 ออกเตฟ</option></select>
+        <select id="dirSel" aria-label="ทิศทาง"><option value="up">ขาขึ้น</option><option value="updown" selected>ขึ้นแล้วลง</option></select>
+        <button class="go" id="drillBtn">เริ่มฝึก</button>
+      </div>
       <div class="chips" id="chips"></div>
       <div class="legend">
         <span><span class="dot" style="background:var(--ok)"></span>อยู่ในบันไดเสียง</span>
         <span><span class="dot" style="background:var(--off)"></span>นอกบันไดเสียง</span>
+      </div>
+      <div class="metro" id="metro">
+        <button class="mbtn" id="bpmDown" aria-label="ลดความเร็ว">−</button>
+        <div class="bpm"><span id="bpmVal">80</span><small>BPM</small></div>
+        <button class="mbtn" id="bpmUp" aria-label="เพิ่มความเร็ว">+</button>
+        <select id="beatSel" aria-label="จังหวะต่อห้อง">
+          <option value="1">ไม่เน้น</option><option value="2">2/4</option><option value="3">3/4</option>
+          <option value="4" selected>4/4</option><option value="6">6/8</option>
+        </select>
+        <button class="go" id="metroBtn">▶ เคาะจังหวะ</button>
+        <div class="beats" id="beats" aria-hidden="true"></div>
       </div>
     </div>
     <p class="hint">โน้ตที่เล่นล่าสุดอยู่ขวาสุด โน้ตก่อนหน้าจะค่อยๆ จางไปทางซ้าย</p>
@@ -240,15 +289,18 @@ body.play .start{margin:0 0 8px;padding:12px}
 
   // Tabs
   function setMode(m){
-    mode=m;
-    $('tabTune').setAttribute('aria-selected', m==='tune');
-    $('tabPlay').setAttribute('aria-selected', m==='play');
-    $('tunePanel').hidden = m!=='tune';
-    $('playPanel').hidden = m!=='play';
-    solfaEl.hidden = m!=='play';
-    document.body.classList.toggle('play', m==='play');
+    const prev=mode; mode=m;
+    [['tabTune','tune'],['tabPlay','play'],['tabDrill','drill']].forEach(([id,k])=>$(id).setAttribute('aria-selected', m===k));
+    const practice = m!=='tune';
+    $('tunePanel').hidden = practice;
+    $('playPanel').hidden = !practice;
+    solfaEl.hidden = !practice;
+    document.body.classList.toggle('play', practice);
+    document.body.classList.toggle('drill', m==='drill');
     noteName.classList.remove('good','bad');
-    if(m==='play') goLandscape(); else leaveLandscape();
+    if(practice) goLandscape(); else { leaveLandscape(); if(metroOn) metroStop(); }
+    if(m==='drill'){ if(!drill.active && !drill.done) prepDrill(); else updateDrillReadout(); }
+    else if(prev==='drill'){ noteName.textContent='–'; noteName.classList.add('idle'); solfaEl.textContent=''; }
     requestAnimationFrame(resizeStaff);
     if(!running) meta.textContent = m==='tune' ? 'กดปุ่มเริ่มฟังแล้วสีสายเปล่า' : 'กดปุ่มเริ่มฟังแล้วเล่นโน้ตทีละตัว';
   }
@@ -265,6 +317,7 @@ body.play .start{margin:0 0 8px;padding:12px}
   }
   $('tabTune').onclick=()=>setMode('tune');
   $('tabPlay').onclick=()=>setMode('play');
+  $('tabDrill').onclick=()=>setMode('drill');
 
   $('refSel').onchange=e=>{A4=+e.target.value; buildStrings();};
 
@@ -289,7 +342,7 @@ body.play .start{margin:0 0 8px;padding:12px}
   const scaleSel=$('scaleSel');
   SCALES.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;scaleSel.appendChild(o);});
   scaleSel.value=scale.id;
-  scaleSel.onchange=()=>{scale=SCALES.find(s=>s.id===scaleSel.value); history=[]; curNote=null; buildChips(); drawStaff(null);};
+  scaleSel.onchange=()=>{scale=SCALES.find(s=>s.id===scaleSel.value); history=[]; curNote=null; buildChips(); if(mode==='drill') prepDrill(); else redraw();};
 
   function inScale(m){ if(!scale.iv) return true; return scale.iv.includes(pc(m-scale.tonic)); }
   function buildChips(){
@@ -342,6 +395,10 @@ body.play .start{margin:0 0 8px;padding:12px}
       w=Math.round(Math.min(820, Math.max(360, 190*box.clientWidth/box.clientHeight)));
     }
     SW=w; staff.setAttribute('viewBox',`0 0 ${w} 190`);
+    redraw();
+  }
+  function redraw(){
+    if(mode==='drill'){ drawDrill(liveNote); return; }
     const h=history.slice(); if(curNote!==null && h[h.length-1]===curNote) h.pop();
     drawStaff(curNote, h);
   }
@@ -374,6 +431,174 @@ body.play .start{margin:0 0 8px;padding:12px}
     });
   }
   drawStaff(null);
+
+  // ---------- Scale drill ----------
+  const drill={seq:[], idx:0, res:[], active:false, done:false};
+  let liveNote=null, rearm=true, lastEvt=null;
+  const setMsg=(t,c)=>{const d=$('drillMsg'); d.textContent=t; d.className='drillmsg'+(c?' '+c:'');};
+  function tonicMidi(){ let m=55; while(pc(m)!==scale.tonic) m++; return m; } // lowest tonic on the G string or above
+  function buildSeq(){
+    const t=tonicMidi(), n=+$('octSel').value, up=[];
+    for(let o=0;o<n;o++) scale.iv.forEach(iv=>up.push(t+12*o+iv));
+    up.push(t+12*n);
+    return $('dirSel').value==='updown' ? up.concat(up.slice(0,-1).reverse()) : up;
+  }
+  const bestKey=()=>'violin.best.'+scale.id+'.'+$('octSel').value+'.'+$('dirSel').value;
+  function getBest(){ try{ return JSON.parse(localStorage.getItem(bestKey())); }catch(e){ return null; } }
+  function setBest(v){ try{ localStorage.setItem(bestKey(), JSON.stringify(v)); }catch(e){} }
+  function showTarget(m){
+    const sp=spell(m, scale.flats);
+    noteName.innerHTML=sp.letter+ACC[sp.acc]+'<sub>'+sp.oct+'</sub>';
+    solfaEl.textContent=solfa(sp);
+    noteName.classList.remove('idle','good','bad'); solfaEl.classList.remove('idle');
+  }
+  function prepDrill(){
+    Object.assign(drill,{active:false,done:false,idx:0,res:[],seq: scale.iv?buildSeq():[]});
+    liveNote=null; $('drillBtn').textContent='เริ่มฝึก'; setMsg('','');
+    updateDrillReadout(); redraw();
+  }
+  function updateDrillReadout(){
+    const rl=$('rlabel');
+    noteName.classList.remove('good','bad');
+    if(!scale.iv){ rl.textContent='เลือกบันไดเสียงก่อนเริ่มฝึก'; noteName.textContent='–'; noteName.classList.add('idle'); solfaEl.textContent=''; return; }
+    const N=drill.seq.length;
+    if(drill.done){
+      const ok=drill.res.filter(r=>r.ok).length;
+      rl.textContent='ผลการฝึก '+scale.name;
+      noteName.innerHTML=ok+'<sub>/'+N+'</sub>'; noteName.classList.remove('idle');
+      if(ok===N) noteName.classList.add('good'); else if(ok/N<0.6) noteName.classList.add('bad');
+      solfaEl.textContent=Math.round(ok/N*100)+'%'; solfaEl.classList.remove('idle');
+      return;
+    }
+    if(drill.active){ rl.textContent='โน้ตที่ต้องเล่น ('+(drill.idx+1)+'/'+N+')'; showTarget(drill.seq[drill.idx]); }
+    else { rl.textContent='กด "เริ่มฝึก" แล้วเล่นไล่ตามโน้ตบนบรรทัด'; showTarget(drill.seq[0]); }
+  }
+  $('drillBtn').onclick=()=>{
+    if(!scale.iv){ setMsg('เลือกบันไดเสียงก่อน','off'); return; }
+    prepDrill(); drill.active=true; rearm=true; lastEvt=null; cand=null;
+    $('drillBtn').textContent='เริ่มใหม่'; updateDrillReadout(); redraw();
+    if(!running) start();
+  };
+  $('octSel').onchange=$('dirSel').onchange=()=>{ if(mode==='drill') prepDrill(); };
+  function onDrillNote(m, cents){
+    const t=drill.seq[drill.idx], ok=m===t, inTune=ok && Math.abs(cents)<=15;
+    drill.res.push({t,m,cents,ok,inTune}); drill.idx++;
+    if(ok) setMsg(inTune?'ถูก เสียงตรง':'ถูก แต่'+(cents<0?'ต่ำ':'สูง')+'ไป '+Math.round(Math.abs(cents))+' cents', inTune?'ok':'warn');
+    else { const sp=spell(m, scale.flats); setMsg('ผิด เล่นเป็น '+sp.letter+ACC[sp.acc]+sp.oct+' ('+solfa(sp)+')','off'); }
+    if(drill.idx>=drill.seq.length) finishDrill(); else updateDrillReadout();
+  }
+  function finishDrill(){
+    drill.active=false; drill.done=true; liveNote=null;
+    const N=drill.seq.length, ok=drill.res.filter(r=>r.ok).length, tune=drill.res.filter(r=>r.inTune).length;
+    const b=getBest();
+    let msg='เสียงตรง '+tune+'/'+N;
+    if(!b || ok>b.ok || (ok===b.ok && tune>b.tune)){ setBest({ok,tune,N}); if(b) msg+=' · สถิติใหม่!'; }
+    else msg+=' · ดีสุด '+b.ok+'/'+b.N;
+    setMsg(msg, ok===N?'ok':(ok/N>=0.6?'warn':'off'));
+    $('drillBtn').textContent='ฝึกอีกครั้ง';
+    updateDrillReadout(); redraw();
+  }
+  function drawHead(x, m, o){
+    const sp=spell(m, scale.flats), step=sp.dia-30, y=yOf(step);
+    const g=el('g',{opacity:o.op==null?1:o.op},staff);
+    const L=yy=>el('line',{x1:x-13,x2:x+13,y1:yy,y2:yy,stroke:'var(--staff)','stroke-width':1.2},g);
+    for(let k=-2;k>=step;k-=2) L(yOf(k));
+    for(let k=10;k<=step;k+=2) L(yOf(k));
+    el('ellipse',{cx:x,cy:y,rx:7.6,ry:5.6,fill:o.fill,stroke:o.stroke||o.fill,'stroke-width':o.sw||1.4,transform:`rotate(-20 ${x} ${y})`},g);
+    if(sp.acc){const t=el('text',{x:x-18,y:y+6,'text-anchor':'middle','font-size':17,fill:o.stroke||o.fill},g);t.textContent=ACC[sp.acc];}
+    return sp;
+  }
+  function drawDrill(live){
+    staff.innerHTML='';
+    for(let i=0;i<5;i++) el('line',{x1:6,x2:SW-6,y1:BOTTOM-i*GAP,y2:BOTTOM-i*GAP,stroke:'var(--staff)','stroke-width':1.2},staff);
+    const clef=el('text',{x:10,y:yOf(2),'font-size':GAP*4,fill:'var(--staff)','font-family':'"Noto Music","Bravura","Segoe UI Symbol",serif'},staff);
+    clef.textContent='𝄞';
+    const seq=drill.seq; if(!seq.length) return;
+    const slots=Math.max(4, Math.floor((SW-100)/38));
+    const gapX=Math.max(38, Math.min(64, (SW-130)/Math.min(seq.length,slots)));
+    const cur = drill.active ? drill.idx : 0;
+    const start = drill.done ? Math.max(0, seq.length-slots) : Math.max(0, Math.min(cur-Math.floor(slots/3), seq.length-slots));
+    for(let i=start;i<Math.min(seq.length,start+slots);i++){
+      const x=84+(i-start)*gapX, r=drill.res[i], isCur=drill.active && i===drill.idx;
+      if(r && r.ok){ const c=r.inTune?'var(--ok)':'var(--accent)'; drawHead(x,seq[i],{fill:c}); }
+      else if(r){ drawHead(x,seq[i],{fill:'var(--panel)',stroke:'var(--muted)',op:.6}); drawHead(x,r.m,{fill:'var(--off)'}); }
+      else if(isCur){
+        const sp=drawHead(x,seq[i],{fill:'var(--panel)',stroke:'var(--accent)',sw:2.6});
+        el('path',{d:`M${x-6} 22 L${x+6} 22 L${x} 31 Z`,fill:'var(--accent)'},staff);
+        const t=el('text',{x,y:182,'text-anchor':'middle','font-size':12,fill:'var(--muted)'},staff);
+        t.textContent=sp.letter+ACC[sp.acc]+sp.oct+'  '+solfa(sp);
+        if(live!=null) drawHead(x,live,{fill:live===seq[i]?'var(--ok)':'var(--off)',op:.55});
+      }
+      else drawHead(x,seq[i],{fill:'var(--panel)',stroke:'var(--staff)',op:.5});
+    }
+  }
+
+  // ---------- Metronome ----------
+  let bpm=80, bpb=4, metroOn=false, nextT=0, beatN=0, metroTimer=0, noiseBuf=null;
+  const clickTimes=[], vq=[];
+  try{ const sv=JSON.parse(localStorage.getItem('violin.metro')); if(sv){ bpm=sv.bpm||80; bpb=sv.bpb||4; } }catch(e){}
+  const saveMetro=()=>{ try{ localStorage.setItem('violin.metro', JSON.stringify({bpm,bpb})); }catch(e){} };
+  const getCtx=()=> ctx = ctx || new (window.AudioContext||window.webkitAudioContext)();
+  function click(t, acc){
+    if(!noiseBuf){
+      noiseBuf=ctx.createBuffer(1, Math.floor(ctx.sampleRate*0.04), ctx.sampleRate);
+      const d=noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+    }
+    // a pitchless "tick" (filtered noise) so the pitch detector doesn't read it as a note
+    const src=ctx.createBufferSource(); src.buffer=noiseBuf;
+    const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=acc?3400:2300; bp.Q.value=1.1;
+    const g=ctx.createGain();
+    g.gain.setValueAtTime(acc?1:0.55,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.035);
+    src.connect(bp).connect(g).connect(ctx.destination); src.start(t); src.stop(t+0.04);
+  }
+  function sched(){
+    while(nextT < ctx.currentTime+0.12){
+      const b=beatN%bpb;
+      click(nextT, bpb>1 && b===0);
+      clickTimes.push(nextT); vq.push({t:nextT,b});
+      nextT+=60/bpm; beatN++;
+    }
+  }
+  function lightBeat(b){ [...$('beats').children].forEach((d,i)=>d.classList.toggle('lit', i===b)); }
+  function buildBeats(){
+    const box=$('beats'); box.innerHTML='';
+    for(let i=0;i<Math.max(1,bpb);i++){ const d=document.createElement('i'); if(i===0 && bpb>1) d.className='acc'; box.appendChild(d); }
+  }
+  function metroViz(){
+    if(!metroOn) return;
+    while(vq.length && vq[0].t<=ctx.currentTime){ const b=vq.shift().b; lightBeat(b); }
+    requestAnimationFrame(metroViz);
+  }
+  async function metroStart(){
+    getCtx(); await ctx.resume();
+    metroOn=true; beatN=0; nextT=ctx.currentTime+0.06;
+    sched(); metroTimer=setInterval(sched,25);
+    $('metroBtn').textContent='■ หยุด'; $('metroBtn').classList.add('on');
+    requestAnimationFrame(metroViz);
+  }
+  function metroStop(){
+    metroOn=false; clearInterval(metroTimer); vq.length=0; clickTimes.length=0;
+    $('metroBtn').textContent='▶ เคาะจังหวะ'; $('metroBtn').classList.remove('on'); lightBeat(-1);
+  }
+  function inClickWindow(){
+    const t=ctx.currentTime;
+    while(clickTimes.length && clickTimes[0] < t-0.2) clickTimes.shift();
+    for(const c of clickTimes) if(t>=c-0.005 && t<=c+0.09) return true;
+    return false;
+  }
+  function setBpm(v){ bpm=Math.max(30,Math.min(240,v)); $('bpmVal').textContent=bpm; saveMetro(); }
+  function holdRepeat(btn, step){
+    let to=0, iv=0;
+    const end=()=>{clearTimeout(to); clearInterval(iv);};
+    btn.addEventListener('pointerdown',e=>{ e.preventDefault(); setBpm(bpm+step); to=setTimeout(()=>{iv=setInterval(()=>setBpm(bpm+step),70);},400); });
+    ['pointerup','pointerleave','pointercancel'].forEach(ev=>btn.addEventListener(ev,end));
+    btn.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); setBpm(bpm+step); } });
+  }
+  holdRepeat($('bpmDown'),-1); holdRepeat($('bpmUp'),1);
+  $('beatSel').value=String(bpb);
+  $('beatSel').onchange=e=>{ bpb=+e.target.value; beatN=0; buildBeats(); saveMetro(); };
+  $('metroBtn').onclick=()=> metroOn?metroStop():metroStart();
+  setBpm(bpm); buildBeats();
 
   // ---------- Pitch detection (YIN) ----------
   function yin(buf, sr){
@@ -418,7 +643,7 @@ body.play .start{margin:0 0 8px;padding:12px}
         : 'เปิดไมโครโฟนไม่ได้ ('+(e&&e.name||'ไม่ทราบสาเหตุ')+') ลองเปิดหน้านี้ในแท็บใหม่ของเบราว์เซอร์');
       return;
     }
-    ctx = ctx || new (window.AudioContext||window.webkitAudioContext)();
+    getCtx();
     await ctx.resume();
     const src=ctx.createMediaStreamSource(stream);
     analyser=ctx.createAnalyser(); analyser.fftSize=2048;
@@ -442,7 +667,7 @@ body.play .start{margin:0 0 8px;padding:12px}
   function median(a){const s=[...a].sort((x,y)=>x-y);return s[Math.floor(s.length/2)];}
 
   function showIdle(){
-    noteName.classList.add('idle'); solfaEl.classList.add('idle'); noteName.classList.remove('good','bad');
+    if(mode!=='drill'){ noteName.classList.add('idle'); solfaEl.classList.add('idle'); noteName.classList.remove('good','bad'); }
     status.textContent=''; status.className='status';
     setNeedle(shownCents,false);
     document.querySelectorAll('.strings button').forEach(b=>b.classList.remove('hit'));
@@ -451,6 +676,7 @@ body.play .start{margin:0 0 8px;padding:12px}
 
   function loop(){
     if(!running) return;
+    if(metroOn && inClickWindow()){ raf=requestAnimationFrame(loop); return; } // ignore the metronome tick
     analyser.getFloatTimeDomainData(buf);
     let rms=0; for(let i=0;i<buf.length;i++) rms+=buf[i]*buf[i];
     rms=Math.sqrt(rms/buf.length);
@@ -469,6 +695,7 @@ body.play .start{margin:0 0 8px;padding:12px}
         const onset = rms > prevRms*1.35 && rms > 0.5*peakRms;       // new bow stroke
         const newNote = jump>0.6 && rms >= prevRms*0.97 && rms >= 0.3*peakRms; // pitch change that isn't a fading tail
         if(onset || newNote || rms>peakRms){ if(onset||newNote) recent.length=0; peakRms=rms; }
+        if(onset){ rearm=true; cand=null; }   // a fresh bow stroke counts as a new note, even on the same pitch
         const fading = rms < prevRms*0.97 && jump > 0.15 && !(onset||newNote); // volume dropping and pitch sliding
         if(rms < 0.75*peakRms || fading) accept=false;                         // decaying tail: keep last reading
         else peakRms*=0.985;                                         // let peak follow a softer sustained bow
@@ -477,7 +704,11 @@ body.play .start{margin:0 0 8px;padding:12px}
         recent.push(f); if(recent.length>5) recent.shift();
         render(median(recent), now);
       }
-    }else if(now-lastHeard>450){
+    }else{
+      if(now-lastHeard>250) rearm=true;
+      if(liveNote!==null && now-lastHeard>300){ liveNote=null; if(mode==='drill') redraw(); }
+    }
+    if(!f && now-lastHeard>450){
       recent.length=0; peakRms=0; showIdle();
       if(now-lastHeard>900){ cand=null; lastPushed=null; }
     }
@@ -487,7 +718,7 @@ body.play .start{margin:0 0 8px;padding:12px}
 
   function render(f, now){
     const mf=freqToMidiF(f);
-    noteName.classList.remove('idle');
+    if(mode!=='drill') noteName.classList.remove('idle');
     if(mode==='tune'){
       let idx=selString;
       if(idx<0){ let best=1e9; STRINGS.forEach((s,i)=>{const d=Math.abs(mf-s.m); if(d<best){best=d;idx=i;}}); }
@@ -501,6 +732,13 @@ body.play .start{margin:0 0 8px;padding:12px}
       else if(Math.abs(cents)<=5){ status.textContent='ตรงแล้ว'; status.className='status ok'; }
       else if(cents<0){ status.textContent='ต่ำไป '+Math.round(-cents)+' cents · ขันสายให้ตึงขึ้น'; status.className='status off'; }
       else { status.textContent='สูงไป '+Math.round(cents)+' cents · คลายสายลง'; status.className='status off'; }
+    }else if(mode==='drill'){
+      if(!drill.active) return;
+      const m=Math.round(mf), cents=(mf-m)*100;
+      liveNote=m;
+      if(cand!==m){ cand=m; candSince=now; }
+      else if(now-candSince>180 && (m!==lastEvt || rearm)){ lastEvt=m; rearm=false; onDrillNote(m,cents); }
+      redraw();
     }else{
       const m=Math.round(mf), cents=(mf-m)*100;
       const sp=spell(m, scale.flats);
@@ -525,7 +763,7 @@ body.play .start{margin:0 0 8px;padding:12px}
 
   // ---------- Reference tone ----------
   $('playRef').onclick=async()=>{
-    ctx = ctx || new (window.AudioContext||window.webkitAudioContext)();
+    getCtx();
     await ctx.resume();
     const idx = selString<0 ? 2 : selString;
     const f=midiToFreq(STRINGS[idx].m);

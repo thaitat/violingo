@@ -58,6 +58,8 @@ svg{display:block;width:100%;height:auto}
 .start{display:block;width:100%;margin:14px 0;font:inherit;font-size:1.05rem;font-weight:700;
   padding:14px;border-radius:12px;border:0;background:var(--accent);color:#fff;cursor:pointer}
 .start.running{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:500}
+.hold{display:flex;gap:8px;align-items:flex-start;font-size:.9rem;color:var(--muted);margin:-2px 0 4px;line-height:1.5}
+.hold input{width:18px;height:18px;margin-top:2px;accent-color:var(--accent)}
 .err{color:var(--off);font-size:.9rem;margin:-4px 0 12px;display:none}
 
 .panel{margin-top:14px}
@@ -110,6 +112,7 @@ svg{display:block;width:100%;height:auto}
 
   <button class="start" id="startBtn">เริ่มฟังเสียง</button>
   <p class="err" id="err"></p>
+  <label class="hold"><input type="checkbox" id="holdChk" checked> ล็อกค่าตอนเสียงดังที่สุด (ไม่อ่านช่วงเสียงที่กำลังจางหาย)</label>
 
   <!-- Tuner -->
   <section class="panel" id="tunePanel">
@@ -323,6 +326,8 @@ svg{display:block;width:100%;height:auto}
   // ---------- Audio ----------
   let ctx=null, analyser=null, stream=null, buf=null, running=false, raf=0;
   const recent=[];
+  let peakRms=0, prevRms=0;
+  const holdChk=document.getElementById('holdChk');
 
   async function start(){
     err.style.display='none';
@@ -380,14 +385,27 @@ svg{display:block;width:100%;height:auto}
       if(r && r.conf>0.8 && r.f>170 && r.f<3200) f=r.f;
     }
     if(f){
-      if(recent.length && Math.abs(12*Math.log2(f/median(recent)))>0.8) recent.length=0;
-      recent.push(f); if(recent.length>5) recent.shift();
       lastHeard=now;
-      render(median(recent), now);
+      const jump = recent.length ? Math.abs(12*Math.log2(f/median(recent))) : 99;
+      let accept=true;
+      if(holdChk.checked){
+        // Peak hold: only trust frames near the loudest part of the note.
+        const onset = rms > prevRms*1.35 && rms > 0.5*peakRms;       // new bow stroke
+        const newNote = jump>0.6 && rms >= prevRms*0.97 && rms >= 0.3*peakRms; // pitch change that isn't a fading tail
+        if(onset || newNote || rms>peakRms){ if(onset||newNote) recent.length=0; peakRms=rms; }
+        const fading = rms < prevRms*0.97 && jump > 0.15 && !(onset||newNote); // volume dropping and pitch sliding
+        if(rms < 0.75*peakRms || fading) accept=false;                         // decaying tail: keep last reading
+        else peakRms*=0.985;                                         // let peak follow a softer sustained bow
+      }else if(jump>0.8){ recent.length=0; }
+      if(accept){
+        recent.push(f); if(recent.length>5) recent.shift();
+        render(median(recent), now);
+      }
     }else if(now-lastHeard>450){
-      recent.length=0; showIdle();
+      recent.length=0; peakRms=0; showIdle();
       if(now-lastHeard>900){ cand=null; lastPushed=null; }
     }
+    prevRms=rms;
     raf=requestAnimationFrame(loop);
   }
 

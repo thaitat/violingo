@@ -81,6 +81,49 @@ svg{display:block;width:100%;height:auto}
 .chip.on{background:var(--ok);border-color:var(--ok);color:#fff}
 .legend{display:flex;gap:14px;font-size:.8rem;color:var(--muted);margin-top:8px}
 .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.note.good{color:var(--ok)} .note.bad{color:var(--off)}
+.rotate{display:none;margin:0;padding:10px 12px;border-radius:10px;background:var(--panel);border:1px dashed var(--accent);color:var(--ink);font-size:.9rem;text-align:center}
+#scaleRow{margin:0 0 10px}
+
+/* ---- Practice mode: landscape layout ---- */
+body.play{height:100%}
+body.play .wrap{max-width:none;height:100%;display:grid;gap:10px 14px;padding:10px 14px 12px;
+  grid-template-columns:minmax(0,1fr) minmax(210px,26%);
+  grid-template-rows:auto minmax(0,1fr) auto;
+  grid-template-areas:"head tabs" "staff note" "chips ctrl"}
+body.play header{grid-area:head;margin:0}
+body.play h1{font-size:1.1rem}
+body.play .tabs button{padding:7px 6px;white-space:nowrap;font-size:.9rem}
+body.play .hold .long,body.play .legend{display:none}
+body.play #chipsBox{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+body.play #chipsBox .row{margin:0}
+body.play .tabs{grid-area:tabs;margin:0;align-self:center}
+body.play #playPanel{display:contents}
+body.play .staffbox{grid-area:staff;min-height:0;display:flex;align-items:center;padding:4px;overflow:hidden}
+body.play .staffbox svg{width:100%;height:100%}
+body.play #chipsBox{grid-area:chips}
+body.play #chipsBox .chips{margin-top:0}
+body.play .readout{grid-area:note;display:flex;flex-direction:column;justify-content:center;padding:10px}
+body.play #controls{grid-area:ctrl;align-self:end}
+body.play #meter,body.play #meta,body.play #status,body.play .panel .hint{display:none}
+body.play .note{font-size:clamp(3rem,15vh,6.5rem)}
+body.play .note sub{font-size:.4em}
+body.play .solfa{font-size:clamp(2rem,10vh,4.2rem)}
+body.play .chip{font-size:1.05rem;padding:6px 12px}
+body.play .start{margin:0 0 8px;padding:12px}
+@media (orientation: portrait){
+  body.play{height:auto}
+  body.play .wrap{height:auto;max-width:560px;grid-template-columns:minmax(0,1fr);grid-template-rows:none;
+    grid-template-areas:"head" "tabs" "rotate" "staff" "note" "chips" "ctrl"}
+  body.play #chipsBox{display:block}
+  body.play #chipsBox .row{margin:0 0 10px}
+  body.play .legend{display:flex}
+  body.play .rotate{display:block;grid-area:rotate}
+  body.play .note{font-size:4.6rem}
+  body.play .solfa{font-size:2.6rem}
+  body.play .wrap{padding-bottom:28px}
+  body.play .staffbox svg{height:auto}
+}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion: reduce){ .chip{transition:none} }
 </style>
@@ -110,9 +153,11 @@ svg{display:block;width:100%;height:auto}
     <div class="status" id="status"></div>
   </section>
 
-  <button class="start" id="startBtn">เริ่มฟังเสียง</button>
-  <p class="err" id="err"></p>
-  <label class="hold"><input type="checkbox" id="holdChk" checked> ล็อกค่าตอนเสียงดังที่สุด (ไม่อ่านช่วงเสียงที่กำลังจางหาย)</label>
+  <div id="controls">
+    <button class="start" id="startBtn">เริ่มฟังเสียง</button>
+    <p class="err" id="err"></p>
+    <label class="hold"><input type="checkbox" id="holdChk" checked> <span>ล็อกค่าตอนเสียงดังที่สุด<span class="long"> (ไม่อ่านช่วงเสียงที่กำลังจางหาย)</span></span></label>
+  </div>
 
   <!-- Tuner -->
   <section class="panel" id="tunePanel">
@@ -126,15 +171,18 @@ svg{display:block;width:100%;height:auto}
 
   <!-- Practice -->
   <section class="panel" id="playPanel" hidden>
-    <div class="row" style="margin:0 0 10px">
+    <p class="rotate" id="rotateHint">หมุนมือถือเป็นแนวนอน เพื่อดูบรรทัดโน้ตแบบเต็มจอ</p>
+    <div class="staffbox"><svg id="staff" viewBox="0 0 360 190" role="img" aria-label="บรรทัด 5 เส้นแสดงโน้ตที่เล่น"></svg></div>
+    <div id="chipsBox">
+      <div class="row" id="scaleRow">
       <label for="scaleSel" style="font-weight:500">บันไดเสียง</label>
       <select id="scaleSel"></select>
-    </div>
-    <div class="staffbox"><svg id="staff" viewBox="0 0 360 190" role="img" aria-label="บรรทัด 5 เส้นแสดงโน้ตที่เล่น"></svg></div>
-    <div class="chips" id="chips"></div>
-    <div class="legend">
-      <span><span class="dot" style="background:var(--ok)"></span>อยู่ในบันไดเสียง</span>
-      <span><span class="dot" style="background:var(--off)"></span>นอกบันไดเสียง</span>
+      </div>
+      <div class="chips" id="chips"></div>
+      <div class="legend">
+        <span><span class="dot" style="background:var(--ok)"></span>อยู่ในบันไดเสียง</span>
+        <span><span class="dot" style="background:var(--off)"></span>นอกบันไดเสียง</span>
+      </div>
     </div>
     <p class="hint">โน้ตที่เล่นล่าสุดอยู่ขวาสุด โน้ตก่อนหน้าจะค่อยๆ จางไปทางซ้าย</p>
   </section>
@@ -198,7 +246,22 @@ svg{display:block;width:100%;height:auto}
     $('tunePanel').hidden = m!=='tune';
     $('playPanel').hidden = m!=='play';
     solfaEl.hidden = m!=='play';
+    document.body.classList.toggle('play', m==='play');
+    noteName.classList.remove('good','bad');
+    if(m==='play') goLandscape(); else leaveLandscape();
+    requestAnimationFrame(resizeStaff);
     if(!running) meta.textContent = m==='tune' ? 'กดปุ่มเริ่มฟังแล้วสีสายเปล่า' : 'กดปุ่มเริ่มฟังแล้วเล่นโน้ตทีละตัว';
+  }
+  async function goLandscape(){
+    try{
+      const de=document.documentElement;
+      if(!document.fullscreenElement && de.requestFullscreen) await de.requestFullscreen({navigationUI:'hide'});
+      if(screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
+    }catch(e){ /* iPhone and some browsers can't force rotation; the layout still adapts when the phone is turned */ }
+  }
+  function leaveLandscape(){
+    try{ if(screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); }catch(e){}
+    if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(()=>{});
   }
   $('tabTune').onclick=()=>setMode('tune');
   $('tabPlay').onclick=()=>setMode('play');
@@ -226,7 +289,7 @@ svg{display:block;width:100%;height:auto}
   const scaleSel=$('scaleSel');
   SCALES.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;scaleSel.appendChild(o);});
   scaleSel.value=scale.id;
-  scaleSel.onchange=()=>{scale=SCALES.find(s=>s.id===scaleSel.value); history=[]; buildChips(); drawStaff(null);};
+  scaleSel.onchange=()=>{scale=SCALES.find(s=>s.id===scaleSel.value); history=[]; curNote=null; buildChips(); drawStaff(null);};
 
   function inScale(m){ if(!scale.iv) return true; return scale.iv.includes(pc(m-scale.tonic)); }
   function buildChips(){
@@ -271,17 +334,30 @@ svg{display:block;width:100%;height:auto}
   const staff=$('staff');
   const GAP=14, BOTTOM=128; // E4 line
   const yOf=step=>BOTTOM - step*GAP/2;
-  function drawStaff(current){
+  let SW=360, curNote=null;
+  function resizeStaff(){
+    const box=document.querySelector('.staffbox');
+    let w=360;
+    if(document.body.classList.contains('play') && innerWidth>innerHeight && box.clientHeight>40){
+      w=Math.round(Math.min(820, Math.max(360, 190*box.clientWidth/box.clientHeight)));
+    }
+    SW=w; staff.setAttribute('viewBox',`0 0 ${w} 190`);
+    const h=history.slice(); if(curNote!==null && h[h.length-1]===curNote) h.pop();
+    drawStaff(curNote, h);
+  }
+  addEventListener('resize', ()=>requestAnimationFrame(resizeStaff));
+  function drawStaff(current, hist=history){
     staff.innerHTML='';
     const s=(t,a)=>el(t,a,staff);
-    for(let i=0;i<5;i++) s('line',{x1:6,x2:354,y1:BOTTOM-i*GAP,y2:BOTTOM-i*GAP,stroke:'var(--staff)','stroke-width':1.2});
+    for(let i=0;i<5;i++) s('line',{x1:6,x2:SW-6,y1:BOTTOM-i*GAP,y2:BOTTOM-i*GAP,stroke:'var(--staff)','stroke-width':1.2});
     const clef=s('text',{x:10,y:yOf(2),'font-size':GAP*4,fill:'var(--staff)','font-family':'"Noto Music","Bravura","Segoe UI Symbol",serif'});
     clef.textContent='𝄞';
-    const items=history.slice(-7).map(h=>({m:h,cur:false}));
+    const slots=Math.max(4, Math.floor((SW-110)/38));
+    const items=hist.slice(-(slots-1)).map(h=>({m:h,cur:false}));
     if(current!==null) items.push({m:current,cur:true});
     const n=items.length;
     items.forEach((it,i)=>{
-      const x = current!==null ? 318 - (n-1-i)*36 : 318 - (n-1-i)*36;
+      const x = SW-44 - (n-1-i)*38;
       const sp=spell(it.m, scale.flats);
       const step=sp.dia-30; // 30 = E4
       const y=yOf(step);
@@ -366,7 +442,7 @@ svg{display:block;width:100%;height:auto}
   function median(a){const s=[...a].sort((x,y)=>x-y);return s[Math.floor(s.length/2)];}
 
   function showIdle(){
-    noteName.classList.add('idle'); solfaEl.classList.add('idle');
+    noteName.classList.add('idle'); solfaEl.classList.add('idle'); noteName.classList.remove('good','bad');
     status.textContent=''; status.className='status';
     setNeedle(shownCents,false);
     document.querySelectorAll('.strings button').forEach(b=>b.classList.remove('hit'));
@@ -433,6 +509,8 @@ svg{display:block;width:100%;height:auto}
       meta.textContent=f.toFixed(1)+' Hz  ·  '+(cents>=0?'+':'')+Math.round(cents)+' cents';
       setNeedle(cents,true);
       const ok=inScale(m);
+      noteName.classList.toggle('bad', !ok);
+      noteName.classList.toggle('good', ok && Math.abs(cents)<=10);
       if(!ok){ status.textContent='โน้ตนี้ไม่อยู่ใน '+scale.name; status.className='status off'; }
       else if(Math.abs(cents)<=10){ status.textContent='เสียงตรง'; status.className='status ok'; }
       else { status.textContent=cents<0?'เพี้ยนต่ำ ขยับนิ้วขึ้นเล็กน้อย':'เพี้ยนสูง ขยับนิ้วลงเล็กน้อย'; status.className='status off'; }
@@ -440,10 +518,8 @@ svg{display:block;width:100%;height:auto}
       // stable-note history
       if(cand!==m){cand=m; candSince=now;}
       else if(now-candSince>150 && lastPushed!==m){ history.push(m); if(history.length>12) history.shift(); lastPushed=m; }
-      drawStaff(null);
-      // redraw with current (history's last may equal current; show it as current)
-      const h=history.slice(); if(h.length && h[h.length-1]===m) h.pop();
-      const save=history; history=h; drawStaff(m); history=save;
+      const h=history.slice(); if(h.length && h[h.length-1]===m) h.pop(); // current note drawn separately
+      curNote=m; drawStaff(m, h);
     }
   }
 
